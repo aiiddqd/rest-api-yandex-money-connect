@@ -1,26 +1,28 @@
 <?php
 /*
-Plugin Name: Yandex Money Reciver Payments
-Version: 0.1
-Plugin URI: ${TM_PLUGIN_BASE}
+Plugin Name: Yandex Money Reciver via HTTP
+Version: 0.2
+Plugin URI: https://github.com/yumashev/rest-api-yandex-money-connect
 Description: Получает и обрабатывает сообщения о платежая на Яндекс Деньги (class json_api_yandex_money). Endpoint /wp-json/yandex-money/v1/notify/
-Author: ${TM_NAME}
-Author URI: ${TM_HOMEPAGE}
+Author: yumashev@fleep.io
+Author URI: https://github.com/yumashev/
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
-
 require_once 'inc/class-form-pay.php';
+require_once 'inc/class-menu-settings.php';
+require_once 'inc/class-email-sample.php';
+
 
 class json_api_yandex_money {
 
-  var $secret = 'UuwexCUqROJyOxwWW1tAQerg';
+  var $secret = '';
 
   function __construct(){
     add_filter('rest_enabled', '__return_true');
     add_action( 'rest_api_init', array($this, 'rest_api_init_callback') );
-    add_action( 'json_api_yandex_money_get_data', array($this, 'json_api_yandex_money_get_data_mail'), $priority = 10, $accepted_args = 2 );
+
   }
 
   function rest_api_init_callback(){
@@ -38,28 +40,6 @@ class json_api_yandex_money {
 
   }
 
-
-  function json_api_yandex_money_get_data_mail($body, $data_request){
-
-    $message = 'Поступил платеж';
-    $message .= '<br/>';
-
-    $message .= sprintf('<hr><pre>%s</pre>', $body);
-
-    $data = print_r($data_request, true);
-    $message .= sprintf('<hr><pre>%s</pre>', $data);
-
-    // $body = json_decode( $body );
-    // var_dump($body);exit;
-
-    add_filter( 'wp_mail_content_type', array($this, 'set_html_content_type') );
-    $result = wp_mail( $to = 'yumashev@fleep.io,m@systemo.biz', $subject = 'Поступил платеж', $message);
-    remove_filter( 'wp_mail_content_type', array($this, 'set_html_content_type') );
-    return $result;
-
-  }
-
-
   function save_data($data_request){
 
     try {
@@ -67,6 +47,10 @@ class json_api_yandex_money {
       $body = print_r($data_request->get_body(), true);
 
       do_action( 'json_api_yandex_money_get_data', $body, $data_request );
+
+      //check key with saved value
+      // @todo = do it right
+      $this->secret = get_option('ym_http_key', '');
 
       $response = new WP_REST_Response( array('success', 'Data received successfully') );
       $response->set_status( 200 );
@@ -78,10 +62,6 @@ class json_api_yandex_money {
 
     return $response;
 
-  }
-
-  function set_html_content_type(){
-    return 'text/html';
   }
 
   function get_data() {
