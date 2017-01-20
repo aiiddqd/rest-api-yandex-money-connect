@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Yandex Money Reciver via HTTP
-Version: 0.2
+Version: 0.3
 Plugin URI: https://github.com/yumashev/rest-api-yandex-money-connect
 Description: Получает и обрабатывает сообщения о платежая на Яндекс Деньги (class json_api_yandex_money). Endpoint /wp-json/yandex-money/v1/notify/
 Author: yumashev@fleep.io
@@ -45,6 +45,7 @@ class json_api_yandex_money {
     try {
 
       $body = print_r($data_request->get_body(), true);
+      $body = $this->conver_body_in_array($body);
 
       do_action( 'json_api_yandex_money_get_data', $body, $data_request );
 
@@ -66,6 +67,26 @@ class json_api_yandex_money {
 
   function get_data() {
   	return array('yandex-money', 'test ok');
+  }
+
+  //Converted string from Money to array
+  function conver_body_in_array($body){
+
+    if( strpos($body, 'notification_type') !== false ){
+      // $message .= sprintf('<hr><pre>%s</pre>', $body);
+      $data_array_source = explode('&', $body);
+
+      $data_array = array();
+      if(is_array($data_array_source)){
+        foreach ($data_array_source as $value) {
+          $value_array = explode('=', $value);
+          $data_array[$value_array[0]] = $value_array[1];
+        }
+        $body = $data_array;
+      }
+    }
+
+    return $body;
   }
 
 }

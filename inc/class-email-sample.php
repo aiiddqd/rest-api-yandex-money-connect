@@ -18,9 +18,21 @@ class ym_http_email_sample{
       $to = get_option( 'ym_http_mail_addresses', get_option('admin_email') );
 
       $message = 'Поступил платеж';
-      $message .= '<br/>';
+      $message .= '<hr/>';
 
-      $message .= sprintf('<hr><pre>%s</pre>', $body);
+      $message .= sprintf('
+          <ul>
+            <li>amount: %s</li>
+            <li>sender: %s</li>
+            <li>type: %s</li>
+          </ul>',
+
+        $body['amount;'],
+        $body['sender;'],
+        $body['notification_type']
+      );
+
+      $message .= sprintf('<hr><pre>%s</pre>', print_r($body, true));
 
       $data = print_r($data_request, true);
       $message .= sprintf('<hr><pre>%s</pre>', $data);
